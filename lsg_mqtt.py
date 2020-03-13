@@ -4,8 +4,10 @@ import paho.mqtt.client as mqtt
 import time
 import requests
 import threading
+import serial
 
-BROKER_ADDRESS = "localhost"
+
+BROKER_ADDRESS = "0.0.0.0"
 ID_TRAY = "Plateau1"
 
 class MyMQTTClass(mqtt.Client):
@@ -25,10 +27,9 @@ class MyMQTTClass(mqtt.Client):
         if id != self.id_plateau:
             if data[1] == "END MEAL":
                 self.capturing = False
-                url = 'http://0.0.0.0:5000/tray/data'
+                url = 'http://' + BROKER_ADDRESS + ':5000/tray/data'
                 myfiles = {'data': open(self.filename ,'rb')}
                 x = requests.post(url, files = myfiles)
-                print(x)
                 print("END MEAL")
                 myfiles['data'].close()
             elif data[1] == "START MEAL":
@@ -55,22 +56,24 @@ class CaptureThread(threading.Thread):
         self.config = config
 
     def run(self):
-        if self.config.is_threading() and seld.ser is None:
-            """self.ser = serial.Serial(
-                port='/dev/ttyUSB0',
-                baudrate=9600,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS,
-                timeout=1
-            )"""
-            
         while True:
             if self.config.is_threading():
+                if self.ser is None:
+                    self.ser = serial.Serial(
+                        port='/dev/ttyUSB0',
+                        baudrate=9600,
+                        parity=serial.PARITY_NONE,
+                        stopbits=serial.STOPBITS_ONE,
+                        bytesize=serial.EIGHTBITS,
+                        timeout=1
+                    )
+
                 with open(self.config.filename , "a+")as f:
-                    """x = self.ser.readline().decode('utf-8')"""
-                    f.write("floup")
-                    time.sleep(1)
+                    try:
+                        x = self.ser.readline().decode('utf-8')
+                        f.write(x)
+                    finally:
+                        time.sleep(1)
                 
 
 client = MyMQTTClass(ID_TRAY, BROKER_ADDRESS)
