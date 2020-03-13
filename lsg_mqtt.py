@@ -96,7 +96,7 @@ class CaptureThread(threading.Thread):
                 with open(self.config.filename , "a+")as f:
                     try:
                         x = self.ser.readline().decode('utf-8')
-                        f.write("floup")
+                        f.write(x)
                         x = x.split("\t")
                         self.config.drink.append(float(x[1]))
                         self.config.meal.append(float(x[4]))
